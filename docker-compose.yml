@@ -1,0 +1,34 @@
+version: "3.9"
+services:
+  metasploit-service:
+    build:
+      context: .
+      dockerfile: ./deployment/metasploit-app/Dockerfile
+    container_name: metasploit-service
+    ports:
+      - "8080:8080" # Exponer el puerto del servicio MSFRPCD
+    networks:
+      - my-network # Conectar al mismo puente que el segundo contenedor
+    volumes:
+      - ./results:/app/results # Compartir resultados
+
+  vulnerable-service:
+    image: wordpress
+    restart: always
+    networks:
+      - my-network # Conectar al mismo puente
+  
+  neo4j:
+    image: neo4j:5.11.0
+    container_name: neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/password # Cambia la contraseña según sea necesario
+    ports:
+      - "7687:7687" # Puerto para las conexiones Bolt
+      - "7474:7474" # Puerto para la interfaz web
+    networks:
+      - my-network # Conectar al mismo puente
+
+networks:
+  my-network:
+    driver: bridge
