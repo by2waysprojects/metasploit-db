@@ -84,13 +84,31 @@ func (s *Neo4jService) importCSVToNeo4j(filePath string) error {
 		exploit = "unknown"
 	}
 
-	_, err = session.Run(ctx, `
+	if err := s.createExploit(ctx, session, exploit, payload, fileName); err != nil {
+		return err
+	}
+
+	if err := s.createPacketsInExploit(ctx, session, records, exploit, payload, filePath); err != nil {
+		return err
+	}
+
+	fmt.Println("Data successfully imported into Neo4j.")
+	return nil
+}
+
+func (s *Neo4jService) createExploit(ctx context.Context, session neo4j.SessionWithContext, exploit, payload, fileName string) error {
+	_, err := session.Run(ctx, `
 		CREATE (e:Exploit {name: $fileName, payload: $payload})
 	`, map[string]interface{}{"fileName": exploit, "payload": payload})
 	if err != nil {
-		return fmt.Errorf("error creating parent node for file %s: %w", fileName, err)
+		return fmt.Errorf("error creating exploit for file %s: %w", fileName, err)
 	}
 
+	return nil
+}
+
+func (s *Neo4jService) createPacketsInExploit(ctx context.Context, session neo4j.SessionWithContext,
+	records []services.CSVRecord, exploit, payload, filePath string) error {
 	for _, record := range records {
 
 		query := `
@@ -119,6 +137,5 @@ func (s *Neo4jService) importCSVToNeo4j(filePath string) error {
 		}
 	}
 
-	fmt.Println("Data successfully imported into Neo4j.")
 	return nil
 }
