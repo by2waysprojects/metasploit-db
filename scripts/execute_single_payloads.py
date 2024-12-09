@@ -14,12 +14,7 @@ for exploit_info in exploits:
     if not (exploit_name.startswith("multi/http/wp") or exploit_name.startswith("multi/http/php") or exploit_name.startswith("multi/php/")) :
         continue
 
-    index = 0
-
     for payload_info in exploit.targetpayloads():
-
-        if index == 6:
-            break
 
         payload_name = payload_info
         print(f"Preparing to execute with payload: {payload_name}")
@@ -77,37 +72,42 @@ for exploit_info in exploits:
             csv_writer = csv.writer(csvfile)
             csv_writer.writerow(['seq', 'protocol', 'size', 'request', 'body'])
 
-            for packet in cap:
-                info = "N/A"
-                form_data = "N/A"
-                packet_number = packet.number
-                packet_length = packet.length
+            isEmptyCap = None
+            try:
+                isEmptyCap = next(iter(cap), None)
+            except Exception as e:
+                print("An error occurred iterating over cap")
 
-                if not hasattr(packet, 'ip'):
-                    continue
+            if next(iter(cap), None) is not None:
 
-                if 'http' in packet:
-                    if hasattr(packet.http, 'chat'):
-                        info = getattr(packet.http, 'chat', 'N/A')
+                for packet in cap:
+                    info = "N/A"
+                    form_data = "N/A"
+                    packet_number = packet.number
+                    packet_length = packet.length
 
-                    if hasattr(packet.http, 'request_method') and packet.http.request_method == 'POST':
-                        print("Packet HTTP POST detected.")
-                        
-                        if hasattr(packet.http, 'file_data'):
-                            form_data =  getattr(packet.http, 'file_data', 'N/A')
+                    if not hasattr(packet, 'ip'):
+                        continue
 
-                csv_writer.writerow([
-                    packet_number,
-                    packet.highest_layer,
-                    packet_length,
-                    info,
-                    form_data
-                ])
+                    if 'http' in packet:
+                        if hasattr(packet.http, 'chat'):
+                            info = getattr(packet.http, 'chat', 'N/A')
+
+                        if hasattr(packet.http, 'request_method') and packet.http.request_method == 'POST':
+                            print("Packet HTTP POST detected.")
+                            
+                            if hasattr(packet.http, 'file_data'):
+                                form_data =  getattr(packet.http, 'file_data', 'N/A')
+
+                    csv_writer.writerow([
+                        packet_number,
+                        packet.highest_layer,
+                        packet_length,
+                        info,
+                        form_data
+                    ])
                 
         cap.close()
 
         print(f"File CSV generated: {capture_file_csv}")
-        subprocess.run(["rm", "results/"+capture_file_replaced])
-        index = index + 1
-    
-    break
+        subprocess.run(["rm", "results/"+capture_file_replaced])    
