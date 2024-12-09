@@ -1,14 +1,14 @@
-# ✨ Cyber Threat Intelligence Database for WordPress and PHP Exploits ✨
+# ✨ CTI Database for WordPress and PHP Exploits ✨
 
-This repository contains an application designed to capture and store data related to **WordPress** and **PHP exploits** in a **Neo4j database**, aiding in Cyber Threat Intelligence (CTI) to help mitigate potential attacks. Exploit data is gathered through network traffic captures, analyzed, and saved into a graph database structure. The system is implemented using **Go** and **Python** and is deployable via Docker Compose.
+This repository contains an application designed to capture and store data related to **WordPress** and **PHP exploits** in a **Neo4j database**, aiding in Cyber Threat Intelligence (CTI) to help mitigate potential attacks. Exploit data is gathered through automated execution of Metasploit modules, with network traffic captures analyzed and saved into a graph database structure. The focus is placed on identifying and analyzing Layer 7 (application layer) HTTP traffic, particularly for web applications.
 
 ---
 
 ## 🌐 Features
 
 - ⚖️ **Graph-based Threat Intelligence**: Organizes exploit data into relationships for better attack pattern analysis.
-- ⚡ **Focus on WordPress and PHP Exploits**: Derived from captured traffic.
-- ⌛ **Fast and Scalable**: Leverages the Neo4j graph database for rapid querying and visualization.
+- ⚡ **Focus on Layer 7 HTTP Traffic**: Targets exploits in web applications, such as WordPress and PHP vulnerabilities.
+- ⏳ **Fast and Scalable**: Leverages the Neo4j graph database for rapid querying and visualization.
 - 🌍 **Dockerized Environment**: Easy installation and setup using Docker Compose.
 
 ---
@@ -23,12 +23,14 @@ This repository contains an application designed to capture and store data relat
 ### Steps
 
 1. Clone this repository:
+
    ```bash
    git clone https://github.com/by2waysprojects/metasploit-db.git
    cd metasploit-db
    ```
 
 2. Create a `.env` file in the root directory with the following configuration:
+
    ```env
    NEO4J_DB=neo4j://neo4j:7687
    NEO4J_USER=neo4j
@@ -37,6 +39,7 @@ This repository contains an application designed to capture and store data relat
    ```
 
 3. Start the services using Docker Compose:
+
    ```bash
    docker-compose up --build
    ```
@@ -55,7 +58,7 @@ Once the services are up, you can load exploit data captured in network traffic 
 GET /save-wp-php
 ```
 
-This endpoint processes all relevant traffic and populates the Neo4j database with structured data about exploits, including:
+This endpoint processes all relevant HTTP traffic at Layer 7 and populates the Neo4j database with structured data about exploits, including:
 
 - Attack sequences
 - Exploit payloads
@@ -72,6 +75,16 @@ The following fields are stored for each exploit:
 - **Protocol**: The network protocol used.
 - **Request**: Details of the exploit request.
 - **Body**: Exploit payload or malicious data.
+
+---
+
+## 📈 Visualization Example
+
+Here are two sample screenshots of the Neo4j graph visualization, demonstrating the relationship between exploits, payloads, and HTTP responses:
+
+![Graph Visualization 1](./images/image1.png)
+
+![Graph Visualization 2](./images/image2.png)
 
 ---
 
