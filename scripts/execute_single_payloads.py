@@ -78,7 +78,7 @@ for exploit_info in exploits:
             except Exception as e:
                 print("An error occurred iterating over cap")
 
-            if next(iter(cap), None) is not None:
+            if isEmptyCap is not None:
 
                 for packet in cap:
                     info = "N/A"
