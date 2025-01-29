@@ -28,4 +28,4 @@ RUN mkdir -p /app/results
 
 RUN pip3 install -r /app/requirements.txt
 
-ENTRYPOINT ["/bin/sh", "-c", "ruby /usr/src/metasploit-framework/msfrpcd -U msf -P dL0rHLep -p 55552 -S false -f & ./server"]
+ENTRYPOINT ["/bin/sh", "-c", "ruby /usr/src/metasploit-framework/msfrpcd -U msf -P dL0rHLep -p 55552 -S false -f & ./metasploit-db"]
