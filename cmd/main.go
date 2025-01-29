@@ -10,15 +10,9 @@ import (
 	"metasploit-db/services"
 
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("error loading file .env: %v", err)
-	}
-
 	router := mux.NewRouter()
 	port := os.Getenv("SERVER_PORT")
 	databaseURL := os.Getenv("NEO4J_DB")
