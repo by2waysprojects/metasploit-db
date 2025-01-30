@@ -97,9 +97,10 @@ func (s *Neo4jService) importCSVToNeo4j(filePath string) error {
 }
 
 func (s *Neo4jService) createExploit(ctx context.Context, session neo4j.SessionWithContext, exploit, payload, fileName string) error {
+	new_attack_L7 := services.AttackL7Neo4j{ID: exploit, Payload: payload, Action: services.Alert}
 	_, err := session.Run(ctx, `
-		CREATE (e:Exploit {name: $fileName, payload: $payload})
-	`, map[string]interface{}{"fileName": exploit, "payload": payload})
+		CREATE (e:L7Attack {name: $fileName, payload: $payload, action: $action})
+	`, map[string]interface{}{"fileName": new_attack_L7.ID, "payload": new_attack_L7.Payload, "action": new_attack_L7.Action})
 	if err != nil {
 		return fmt.Errorf("error creating exploit for file %s: %w", fileName, err)
 	}
@@ -111,30 +112,59 @@ func (s *Neo4jService) createPacketsInExploit(ctx context.Context, session neo4j
 	records []services.CSVRecord, exploit, payload, filePath string) error {
 	for _, record := range records {
 
+		new_http_packet := services.HTTPPacket{Seq: record.Seq, Size: record.Size, Protocol: record.Protocol}
+
 		query := `
-		MATCH (e:Exploit {name: $fileName, payload: $payload})
+		MATCH (e:L7Attack {name: $fileName, payload: $payload})
 		CREATE (p:Packet {
 			seq: $seq,
 			size: $size,
 			protocol: $protocol,
-			request: $request,
-			body: $body
 		})-[:BELONGS_TO]->(e)
 	`
 
-		// Execute the query
 		_, err := session.Run(ctx, query, map[string]interface{}{
 			"fileName": exploit,
 			"payload":  payload,
-			"seq":      record.Seq,
-			"size":     record.Size,
-			"protocol": record.Protocol,
-			"request":  record.Request,
-			"body":     record.Body,
+			"seq":      new_http_packet.Seq,
+			"size":     new_http_packet.Size,
+			"protocol": new_http_packet.Protocol,
 		})
+
 		if err != nil {
 			log.Printf("Error inserting record from file %s with seq %s: %v", filePath, record.Seq, err)
 		}
+
+		s.createBody(ctx, session, exploit, payload, record.Seq, record.Body)
+		s.createURI(ctx, session, exploit, payload, record.Seq, record.Request, false)
+	}
+
+	return nil
+}
+
+func (s *Neo4jService) createURI(ctx context.Context, session neo4j.SessionWithContext, attack string, payload string, seq string, uri string, exact bool) error {
+	_, err := session.Run(ctx, `
+			MATCH (p:Packet {seq: $seq})
+			MATCH (e:L7Attack {name: $name, payload: $payload})
+			MATCH (p)-[:BELONGS_TO]->(e)
+			CREATE (h:Uri {id: $uri, exact: $exact})-[:IS_URI]->(p)
+	`, map[string]interface{}{"name": attack, "payload": payload, "seq": seq, "uri": uri, "exact": exact})
+	if err != nil {
+		return fmt.Errorf("error creating uri for rule %s: %w", attack, err)
+	}
+
+	return nil
+}
+
+func (s *Neo4jService) createBody(ctx context.Context, session neo4j.SessionWithContext, attack string, payload string, seq string, body string) error {
+	_, err := session.Run(ctx, `
+			MATCH (p:Packet {seq: $seq})
+			MATCH (e:L7Attack {name: $name, payload: $payload})
+			MATCH (p)-[:BELONGS_TO]->(e)
+			CREATE (h:Body {data: $data})-[:IS_BODY]->(p)
+	`, map[string]interface{}{"name": attack, "payload": payload, "seq": seq, "data": body})
+	if err != nil {
+		return fmt.Errorf("error creating body for rule %s: %w", attack, err)
 	}
 
 	return nil
