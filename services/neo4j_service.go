@@ -16,6 +16,7 @@ import (
 
 type Neo4jService struct {
 	Driver neo4j.DriverWithContext
+	Limit  int
 }
 
 func NewNeo4jService(uri, username, password string) *Neo4jService {
@@ -30,17 +31,23 @@ func (s *Neo4jService) Close() {
 	s.Driver.Close(context.Background())
 }
 
-func (s *Neo4jService) LoadDirectoryToNeo4j(directoryPath string) error {
+func (s *Neo4jService) LoadDirectoryToNeo4j(directoryPath string, limit int) error {
 
-	// Walk through all files in the directory
+	processed := 0
+	s.Limit = limit
+
 	err := filepath.WalkDir(directoryPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("error accessing path %s: %w", path, err)
 		}
 
+		if processed >= s.Limit {
+			return nil
+		}
+
 		if !d.IsDir() && filepath.Ext(path) == ".csv" {
 			log.Printf("Processing file: %s\n", path)
-			if err := s.importCSVToNeo4j(path); err != nil {
+			if err := s.importCSVToNeo4j(path, processed); err != nil {
 				log.Printf("Error processing file %s: %v", path, err)
 			}
 		}
@@ -55,7 +62,7 @@ func (s *Neo4jService) LoadDirectoryToNeo4j(directoryPath string) error {
 	return nil
 }
 
-func (s *Neo4jService) importCSVToNeo4j(filePath string) error {
+func (s *Neo4jService) importCSVToNeo4j(filePath string, processed int) error {
 	ctx := context.Background()
 	// Open the CSV file
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, os.ModePerm)
@@ -92,6 +99,7 @@ func (s *Neo4jService) importCSVToNeo4j(filePath string) error {
 		return err
 	}
 
+	processed++
 	fmt.Println("Data successfully imported into Neo4j.")
 	return nil
 }

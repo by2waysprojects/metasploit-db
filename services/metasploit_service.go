@@ -19,7 +19,7 @@ func NewMetasploitService(neo4jService *Neo4jService) *MetasploitService {
 	}
 }
 
-func (ms *MetasploitService) SaveWPandPHPexploits() error {
+func (ms *MetasploitService) SaveWPandPHPexploits(limit int) error {
 	cmd := exec.Command("python3", "execute_single_payloads.py")
 
 	// Capturar la salida y los errores
@@ -29,7 +29,7 @@ func (ms *MetasploitService) SaveWPandPHPexploits() error {
 		return err
 	}
 
-	if err := ms.Neo4jService.LoadDirectoryToNeo4j(resultsPath); err != nil {
+	if err := ms.Neo4jService.LoadDirectoryToNeo4j(resultsPath, limit); err != nil {
 		log.Printf("Error importing results to Neo4j: %s", err)
 		return err
 	}

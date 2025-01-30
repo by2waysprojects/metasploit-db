@@ -5,6 +5,7 @@ import (
 	"log"
 	"metasploit-db/services"
 	"net/http"
+	"strconv"
 )
 
 type MetasploitController struct {
@@ -20,7 +21,12 @@ func NewMetasploitController(dbService *services.Neo4jService, metasploitService
 func (mc *MetasploitController) LoadWPandPHP(w http.ResponseWriter, r *http.Request) error {
 	log.Println("Saving all exploits from wp and php...")
 
-	err := mc.MetasploitService.SaveWPandPHPexploits()
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit < 1 {
+		limit = 10000
+	}
+
+	err := mc.MetasploitService.SaveWPandPHPexploits(limit)
 	if err != nil {
 		http.Error(w, "Failed executing exploits", http.StatusInternalServerError)
 		return err
