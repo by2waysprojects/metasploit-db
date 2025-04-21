@@ -15,9 +15,7 @@ func RegisterRoutes(router *mux.Router, metasploitController *controllers.Metasp
 			http.Error(w, "Failed to execute payloads", http.StatusInternalServerError)
 		}
 	}).Methods("GET")
-}
 
-func Alive(router *mux.Router, metasploitController *controllers.MetasploitController) {
 	router.HandleFunc("/health-module", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
